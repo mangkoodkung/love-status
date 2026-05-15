@@ -717,37 +717,136 @@ const SENTIMENT_KEYWORDS = {
   // Strong positive (+3 to +5)
   strongPositive: [
     // Thai
-    'รัก', 'หลงรัก', 'รักมาก', 'รักที่สุด', 'แต่งงาน', 'อยากอยู่ด้วย', 'ตลอดไป', 'คนเดียว',
-    'หัวใจ', 'จุ๊บ', 'หอม', 'กอด', 'จับมือ', 'น่ารัก', 'สวยมาก', 'หล่อมาก', 'มหัศจรรย์',
+    'รัก',
+    'หลงรัก',
+    'รักมาก',
+    'รักที่สุด',
+    'แต่งงาน',
+    'อยากอยู่ด้วย',
+    'ตลอดไป',
+    'คนเดียว',
+    'หัวใจ',
+    'จุ๊บ',
+    'หอม',
+    'กอด',
+    'จับมือ',
+    'น่ารัก',
+    'สวยมาก',
+    'หล่อมาก',
+    'มหัศจรรย์',
     // English
-    'love you', 'i love', 'kiss', 'hug', 'embrace', 'forever', 'soulmate', 'marry', 'beautiful',
-    'gorgeous', 'adore', 'cherish', 'precious', 'darling', 'sweetheart',
+    'love you',
+    'i love',
+    'kiss',
+    'hug',
+    'embrace',
+    'forever',
+    'soulmate',
+    'marry',
+    'beautiful',
+    'gorgeous',
+    'adore',
+    'cherish',
+    'precious',
+    'darling',
+    'sweetheart',
   ],
   // Mild positive (+1 to +2)
   mildPositive: [
     // Thai
-    'ยิ้ม', 'หัวเราะ', 'ขอบคุณ', 'ดีจัง', 'น่ารัก', 'สนุก', 'ดี', 'ชอบ', 'พอใจ', 'อบอุ่น',
-    'มีความสุข', 'สดชื่น', 'เพื่อน', 'ใส่ใจ', 'ห่วง', 'ช่วย',
+    'ยิ้ม',
+    'หัวเราะ',
+    'ขอบคุณ',
+    'ดีจัง',
+    'น่ารัก',
+    'สนุก',
+    'ดี',
+    'ชอบ',
+    'พอใจ',
+    'อบอุ่น',
+    'มีความสุข',
+    'สดชื่น',
+    'เพื่อน',
+    'ใส่ใจ',
+    'ห่วง',
+    'ช่วย',
     // English
-    'smile', 'laugh', 'thank', 'happy', 'glad', 'enjoy', 'like', 'nice', 'sweet', 'friend',
-    'care', 'help', 'kind', 'warm', 'cute',
+    'smile',
+    'laugh',
+    'thank',
+    'happy',
+    'glad',
+    'enjoy',
+    'like',
+    'nice',
+    'sweet',
+    'friend',
+    'care',
+    'help',
+    'kind',
+    'warm',
+    'cute',
   ],
   // Mild negative (-1 to -2)
   mildNegative: [
     // Thai
-    'เบื่อ', 'น่ารำคาญ', 'งง', 'ไม่เข้าใจ', 'ไม่อยาก', 'ไม่ชอบ', 'น่าเบื่อ', 'อึดอัด',
-    'รำคาญ', 'แปลก', 'ไม่ดี', 'ไม่โอเค',
+    'เบื่อ',
+    'น่ารำคาญ',
+    'งง',
+    'ไม่เข้าใจ',
+    'ไม่อยาก',
+    'ไม่ชอบ',
+    'น่าเบื่อ',
+    'อึดอัด',
+    'รำคาญ',
+    'แปลก',
+    'ไม่ดี',
+    'ไม่โอเค',
     // English
-    'annoyed', 'bored', 'awkward', 'weird', 'confused', 'tired', 'meh', 'whatever', 'hmph',
+    'annoyed',
+    'bored',
+    'awkward',
+    'weird',
+    'confused',
+    'tired',
+    'meh',
+    'whatever',
+    'hmph',
   ],
   // Strong negative (-3 to -5)
   strongNegative: [
     // Thai
-    'เกลียด', 'โกรธ', 'ผิดหวัง', 'เสียใจ', 'ร้องไห้', 'ทรยศ', 'หักหลัง', 'แย่มาก', 'ทำไม',
-    'ไปให้พ้น', 'อย่ามายุ่ง', 'น่าเกลียด', 'แย่', 'ใจสลาย', 'หมดรัก',
+    'เกลียด',
+    'โกรธ',
+    'ผิดหวัง',
+    'เสียใจ',
+    'ร้องไห้',
+    'ทรยศ',
+    'หักหลัง',
+    'แย่มาก',
+    'ทำไม',
+    'ไปให้พ้น',
+    'อย่ามายุ่ง',
+    'น่าเกลียด',
+    'แย่',
+    'ใจสลาย',
+    'หมดรัก',
     // English
-    'hate', 'angry', 'furious', 'betrayed', 'leave', 'go away', 'stop', 'disgusting', 'horrible',
-    'cruel', 'broken heart', 'cry', 'tears', 'sob', 'devastated',
+    'hate',
+    'angry',
+    'furious',
+    'betrayed',
+    'leave',
+    'go away',
+    'stop',
+    'disgusting',
+    'horrible',
+    'cruel',
+    'broken heart',
+    'cry',
+    'tears',
+    'sob',
+    'devastated',
   ],
 };
 
@@ -2459,6 +2558,19 @@ function onMessageReceived(messageIndex) {
   if (charId) {
     const charData = getCharacterData(charId);
     if (charData) {
+      // Deduplicate: skip if this message was already processed
+      if (!charData.stats._processedMessages) charData.stats._processedMessages = [];
+      const messageKey = `${message.send_date || ''}_${messageIndex}_${(message.mes || '').substring(0, 50)}`;
+      if (charData.stats._processedMessages.includes(messageKey)) {
+        // Already processed — only attach buttons, don't re-score
+        setTimeout(() => attachManualScoreButtons(messageIndex), 100);
+        return;
+      }
+      charData.stats._processedMessages.push(messageKey);
+      // Keep only last 200 to prevent bloat
+      if (charData.stats._processedMessages.length > 200) {
+        charData.stats._processedMessages = charData.stats._processedMessages.slice(-200);
+      }
       const now = new Date();
       const today = now.toISOString().split('T')[0];
 
@@ -2579,7 +2691,7 @@ function attachManualScoreButtons(messageIndex) {
         updateScore(delta);
         // Visual feedback
         btn.style.transform = 'scale(1.3)';
-        setTimeout(() => btn.style.transform = '', 200);
+        setTimeout(() => (btn.style.transform = ''), 200);
       }
     });
   });
