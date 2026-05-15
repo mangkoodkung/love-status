@@ -17,11 +17,6 @@
           <span>โหมดครีเอเตอร์</span>
         </label>
 
-        <label class="love-status-toggle-label">
-          <input type="checkbox" id="love-status-sound-enabled" checked />
-          <span>🔊 เสียงเอฟเฟกต์</span>
-        </label>
-
         <div class="love-status-prompt-section">
           <label for="love-status-prompt">Injection Prompt:</label>
           <textarea
@@ -85,7 +80,14 @@
           <div id="love-creator-levels-list" class="love-creator-levels-list">
             <!-- Dynamically populated by JS -->
           </div>
-          <button id="love-status-add-level-btn" class="love-status-btn" style="margin-top: 8px">+ เพิ่มระดับ</button>
+          <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap">
+            <button id="love-status-add-level-btn" class="love-status-btn">+ เพิ่มระดับ</button>
+            <button id="love-status-export-lorebook-btn" class="love-status-btn">📚 ส่งออกเป็น Lorebook</button>
+          </div>
+          <p style="font-size: 0.75em; opacity: 0.6; margin: 6px 0 0">
+            💡 Tip: ส่งออกเป็น Lorebook (.json) แล้วนำเข้าไปใน World Info ของ SillyTavern เพื่อให้ AI ยึดตาม prompt
+            ของแต่ละ level อย่างเข้มงวดขึ้น
+          </p>
         </div>
 
         <!-- Start Score & Card Embed -->
@@ -97,21 +99,7 @@
 
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px">
             <label for="love-status-start-score" style="font-size: 0.85em; white-space: nowrap">คะแนนเริ่มต้น:</label>
-            <input
-              type="number"
-              id="love-status-start-score"
-              min="0"
-              max="100"
-              value="0"
-              style="
-                width: 70px;
-                padding: 4px 6px;
-                border-radius: 4px;
-                border: 1px solid var(--SmartThemeBorderColor);
-                background: var(--SmartThemeBodyColor);
-                color: var(--SmartThemeBodyTextColor);
-              "
-            />
+            <input type="number" id="love-status-start-score" min="0" max="100" value="0" style="width: 70px" />
             <span style="font-size: 0.75em; opacity: 0.6">(%)</span>
           </div>
 

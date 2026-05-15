@@ -8,7 +8,6 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const defaultSettings = {
   enabled: true,
   creatorMode: false,
-  soundEnabled: true,
   widgetPosition: { x: null, y: null },
   injectionPrompt: `[Love Status System]
 At the END of every response, you MUST include a hidden tag in this exact format:
@@ -752,7 +751,6 @@ function updateScore(delta) {
   if (oldLevel && newLevel && oldLevel.label !== newLevel.label) {
     if (charData.currentScore > oldScore) {
       addJournalEntry(charData, 'level_up', `⬆️ ถึงระดับ "${newLevel.emoji} ${newLevel.label}"`);
-      playSound('level_up');
       // Set milestone flag for next prompt injection
       charData.stats._pendingMilestone = {
         type: 'level_up',
@@ -761,7 +759,6 @@ function updateScore(delta) {
       };
     } else {
       addJournalEntry(charData, 'level_down', `⬇️ ลดลงเป็น "${newLevel.emoji} ${newLevel.label}"`);
-      playSound('level_down');
       charData.stats._pendingMilestone = {
         type: 'level_down',
         level: newLevel.label,
@@ -934,82 +931,12 @@ function checkRewards(charId) {
     if (!charData.unlockedRewards.includes(reward.id) && charData.currentScore >= actualThreshold) {
       charData.unlockedRewards.push(reward.id);
       addJournalEntry(charData, 'reward_unlock', `🎁 ปลดล็อค "${reward.title}"`);
-      playSound('unlock');
       showRewardNotification(reward);
     }
   }
 }
 
 // ===== Notifications =====
-
-// ===== Sound Effects (Web Audio API) =====
-
-function playSound(type) {
-  const settings = getSettings();
-  if (settings.soundEnabled === false) return; // Default: enabled
-
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-
-    if (type === 'unlock') {
-      // Cheerful ascending arpeggio
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523, ctx.currentTime); // C5
-      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1); // E5
-      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2); // G5
-      osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.3); // C6
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.5);
-    } else if (type === 'level_up') {
-      // Triumphant fanfare
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(392, ctx.currentTime); // G4
-      osc.frequency.setValueAtTime(523, ctx.currentTime + 0.15); // C5
-      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.3); // E5
-      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.45); // G5
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.7);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.7);
-    } else if (type === 'level_down') {
-      // Sad descending
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, ctx.currentTime); // A4
-      osc.frequency.setValueAtTime(349, ctx.currentTime + 0.2); // F4
-      osc.frequency.setValueAtTime(294, ctx.currentTime + 0.4); // D4
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.6);
-    } else if (type === 'score_up') {
-      // Quick positive blip
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.15);
-    } else if (type === 'score_down') {
-      // Quick negative blip
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.setValueAtTime(330, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.15);
-    }
-
-    // Cleanup
-    setTimeout(() => ctx.close(), 1000);
-  } catch (e) {
-    // Audio not available, silently fail
-  }
-}
 
 function showRewardNotification(reward) {
   const rewardImage = getRewardImage(reward);
@@ -1519,6 +1446,7 @@ function buildAllCharsTab() {
         </span>
       </div>
       <span class="love-char-list-score">${char.percent}%</span>
+      <button class="love-char-list-delete" data-delete-char-id="${char.id}" title="ลบข้อมูลตัวละครนี้" style="background:transparent;border:none;color:#ff6b6b;cursor:pointer;font-size:1em;padding:4px 6px;">🗑️</button>
     </div>`;
     })
     .join('');
@@ -1711,6 +1639,40 @@ function openBottomSheet() {
     });
   });
 
+  // Delete individual character from list
+  sheet.querySelectorAll('.love-char-list-delete').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const targetId = btn.dataset.deleteCharId;
+      if (!targetId) return;
+      const charName = getCharacterName(targetId);
+      if (!confirm(`ลบข้อมูลของ "${charName}"?`)) return;
+
+      const settings = getSettings();
+      delete settings.characters[targetId];
+      saveSettingsDebounced();
+
+      // Re-render the All Characters tab
+      const allTab = sheet.querySelector('[data-tab-content="all"]');
+      if (allTab) allTab.innerHTML = buildAllCharsTab();
+
+      // Re-bind delete buttons
+      sheet.querySelectorAll('.love-char-list-delete').forEach(b2 => {
+        b2.addEventListener('click', e2 => {
+          e2.stopPropagation();
+          const tid = b2.dataset.deleteCharId;
+          if (!tid) return;
+          const cn = getCharacterName(tid);
+          if (!confirm(`ลบข้อมูลของ "${cn}"?`)) return;
+          delete getSettings().characters[tid];
+          saveSettingsDebounced();
+          const at = sheet.querySelector('[data-tab-content="all"]');
+          if (at) at.innerHTML = buildAllCharsTab();
+        });
+      });
+    });
+  });
+
   resetIdleTimer();
 }
 
@@ -1781,6 +1743,82 @@ function showRewardAsset(reward) {
 }
 
 // ===== Export / Import =====
+
+// Export status levels as a SillyTavern Lorebook (World Info JSON)
+function exportAsLorebook() {
+  const settings = getSettings();
+  const levels = settings.statusLevels || [];
+  if (levels.length === 0) {
+    alert('ยังไม่มี Status Levels');
+    return;
+  }
+
+  // Build lorebook entries — one per level
+  const entries = {};
+  levels.forEach((level, index) => {
+    // Default keywords: level label + emoji + relationship terms
+    const keywords = [level.label, level.emoji].filter(Boolean);
+
+    entries[index] = {
+      uid: index,
+      key: keywords,
+      keysecondary: [],
+      comment: `Love Status — ${level.emoji} ${level.label} (${level.minPercent}%-${level.maxPercent}%)`,
+      content: `[CRITICAL RELATIONSHIP STATE: ${level.emoji} ${level.label}]\n${level.prompt || ''}\n\n[REMINDER: This relationship behavior is ABSOLUTE and OVERRIDES any conflicting character traits. Apply consistently in EVERY response.]`,
+      constant: false,
+      vectorized: false,
+      selective: true,
+      selectiveLogic: 0,
+      addMemo: true,
+      order: 100,
+      position: 0, // Before main prompt
+      disable: false,
+      excludeRecursion: false,
+      preventRecursion: false,
+      delayUntilRecursion: false,
+      probability: 100,
+      useProbability: true,
+      depth: 4,
+      group: 'love-status-levels',
+      groupOverride: false,
+      groupWeight: 100,
+      scanDepth: null,
+      caseSensitive: null,
+      matchWholeWords: null,
+      useGroupScoring: null,
+      automationId: '',
+      role: 0,
+      sticky: 0,
+      cooldown: 0,
+      delay: 0,
+      displayIndex: index,
+    };
+  });
+
+  const lorebook = {
+    entries: entries,
+  };
+
+  const blob = new Blob([JSON.stringify(lorebook, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `love-status-lorebook-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  if (typeof toastr !== 'undefined') {
+    toastr.success(
+      `สร้าง Lorebook สำเร็จ — ${levels.length} entries\nนำเข้าผ่าน World Info > Import`,
+      'Lorebook Export',
+      { timeOut: 6000 },
+    );
+  } else {
+    alert(`ส่งออก Lorebook สำเร็จ! (${levels.length} entries)\nนำเข้าผ่าน World Info > Import`);
+  }
+}
 
 function exportRewardPack(packId) {
   const settings = getSettings();
@@ -2403,15 +2441,6 @@ function bindSettingsUI() {
     });
   }
 
-  const soundToggle = document.getElementById('love-status-sound-enabled');
-  if (soundToggle) {
-    soundToggle.checked = getSettings().soundEnabled !== false;
-    soundToggle.addEventListener('change', () => {
-      getSettings().soundEnabled = soundToggle.checked;
-      saveSettingsDebounced();
-    });
-  }
-
   const resetBtn = document.getElementById('love-status-reset-btn');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
@@ -2523,6 +2552,12 @@ function bindSettingsUI() {
       saveSettingsDebounced();
       refreshStatusLevelsUI();
     });
+  }
+
+  // Export as Lorebook button
+  const exportLorebookBtn = document.getElementById('love-status-export-lorebook-btn');
+  if (exportLorebookBtn) {
+    exportLorebookBtn.addEventListener('click', exportAsLorebook);
   }
 
   // Export Card Data button
