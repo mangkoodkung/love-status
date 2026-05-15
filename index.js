@@ -1681,6 +1681,8 @@ function openBottomSheet() {
           </div>
           <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
             <button class="love-status-btn" id="love-sheet-backup" style="font-size:0.75em;padding:4px 8px;">💾 สำรองข้อมูล</button>
+            <button class="love-status-btn" id="love-sheet-debug" style="font-size:0.75em;padding:4px 8px;">🔍 ดู Prompt</button>
+            <button class="love-status-btn" id="love-sheet-force-refresh" style="font-size:0.75em;padding:4px 8px;">🔄 รีเฟรช Level</button>
             <button class="love-status-btn danger" id="love-sheet-delete-all" style="font-size:0.75em;padding:4px 8px;">🗑️ ลบข้อมูลทั้งหมด</button>
           </div>
           ${levelHtml}
@@ -1776,6 +1778,100 @@ function openBottomSheet() {
       updateHeartWidget();
       closeBottomSheet();
       if (typeof toastr !== 'undefined') toastr.info(`ลบข้อมูล "${charName}" แล้ว`);
+    });
+  }
+
+  // Debug button — show current prompt injection
+  const debugBtn = document.getElementById('love-sheet-debug');
+  if (debugBtn) {
+    debugBtn.addEventListener('click', () => {
+      const cId = getCurrentCharacterId();
+      if (!cId) {
+        alert('ไม่มีตัวละคร');
+        return;
+      }
+      const cData = getCharacterData(cId);
+      const lvl = getCurrentLevel(cData);
+      const charName = getCharacterName(cId);
+      const percent = Math.round((cData.currentScore / cData.maxScore) * 100);
+
+      let info = `🔍 Debug Info\n\n`;
+      info += `Character: ${charName}\n`;
+      info += `ID: ${cId}\n`;
+      info += `Score: ${cData.currentScore} / ${cData.maxScore} (${percent}%)\n`;
+      info += `Current Level: ${lvl ? `${lvl.emoji} ${lvl.label}` : 'none'}\n\n`;
+      info += `--- Active Level Prompt ---\n${lvl?.prompt || '(empty)'}\n\n`;
+      info += `--- System Injection (top, depth 0) ---\nThis goes BEFORE main prompt:\n"### RELATIONSHIP STATUS — ABSOLUTE OVERRIDE..."\n\n`;
+      info += `--- Author's Note Injection (in-chat, depth 1) ---\nThis goes BEFORE last user message (Author's Note slot):\n"[Author's Note — Relationship: ${lvl?.emoji} ${lvl?.label}]..."\n\n`;
+      info += `--- Variable ---\n{{love_level}} = "${lvl?.label || 'none'}"\n\n`;
+      info += `--- Tip ---\nหากตัวละครยังไม่เปลี่ยนพฤติกรรม:\n1. ลอง 🔄 รีเฟรช Level\n2. เปิด Console (F12) → ดู prompt payload\n3. ลด/แก้ personality ใน Character Card ที่ขัดแย้ง`;
+
+      // Show in a popup-style alert with copy
+      const popup = document.createElement('div');
+      popup.style.cssText =
+        'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;';
+      popup.innerHTML = `<div class="love-status-popup" style="max-width:500px;max-height:80vh;overflow-y:auto;">
+        <div class="love-status-popup-header"><span>🔍 Debug Prompt</span><button class="love-status-popup-close" onclick="this.closest('div[style*=fixed]').remove()">✕</button></div>
+        <div class="love-status-popup-body"><pre style="white-space:pre-wrap;font-size:0.8em;line-height:1.5;font-family:monospace;">${info.replace(/</g, '&lt;')}</pre></div>
+      </div>`;
+      popup.addEventListener('click', e => {
+        if (e.target === popup) popup.remove();
+      });
+      document.body.appendChild(popup);
+    });
+  }
+
+  // Force Level Refresh — send a silent system message reminding AI of current level
+  const forceBtn = document.getElementById('love-sheet-force-refresh');
+  if (forceBtn) {
+    forceBtn.addEventListener('click', () => {
+      const cId = getCurrentCharacterId();
+      if (!cId) {
+        alert('ไม่มีตัวละคร');
+        return;
+      }
+      const cData = getCharacterData(cId);
+      const lvl = getCurrentLevel(cData);
+      if (!lvl) {
+        alert('ไม่มี level ปัจจุบัน');
+        return;
+      }
+      const charName = getCharacterName(cId);
+
+      // Insert a silent system message in the chat
+      const ctx = getContext();
+      if (ctx && ctx.chat && Array.isArray(ctx.chat)) {
+        const refreshMsg = {
+          name: 'System',
+          is_user: false,
+          is_system: true,
+          send_date: new Date().toISOString(),
+          mes: `[Relationship Update] ${charName}'s relationship with {{user}} is now: ${lvl.emoji} ${lvl.label}\n${lvl.prompt}\n\n${charName} should now embody this new state in their next response.`,
+          extra: { isSmallSys: true },
+        };
+        ctx.chat.push(refreshMsg);
+        if (typeof ctx.saveChat === 'function') ctx.saveChat();
+        // Trigger UI update
+        if (typeof ctx.eventSource === 'object') {
+          eventSource.emit(event_types.MESSAGE_RECEIVED, ctx.chat.length - 1);
+        }
+        // Force re-render
+        if (typeof window.printMessages === 'function') {
+          window.printMessages();
+        } else if (typeof ctx.reloadCurrentChat === 'function') {
+          ctx.reloadCurrentChat();
+        }
+
+        if (typeof toastr !== 'undefined') {
+          toastr.success(
+            `รีเฟรช level เรียบร้อย — ${lvl.emoji} ${lvl.label}\nลอง regenerate ข้อความล่าสุดหรือส่งข้อความใหม่`,
+            'Force Refresh',
+            { timeOut: 5000 },
+          );
+        }
+      } else {
+        alert('ไม่สามารถเข้าถึง chat context ได้');
+      }
     });
   }
 
@@ -2709,7 +2805,7 @@ function onPromptReady() {
   // Clear prompts if disabled
   if (!settings.enabled) {
     context.setExtensionPrompt(KEY_SYSTEM, '', 0, 0);
-    context.setExtensionPrompt(KEY_REMINDER, '', 1, 0);
+    context.setExtensionPrompt(KEY_REMINDER, '', 1, 1);
     return;
   }
 
@@ -2726,11 +2822,12 @@ function onPromptReady() {
     const level = getCurrentLevel(charData);
 
     if (level && level.prompt) {
-      // Strong system-level instruction
-      systemPrompt += `\n\n### RELATIONSHIP STATUS (MANDATORY)\nLevel: ${level.emoji} ${level.label}\nBehavior: ${level.prompt}\n\nThis behavior is ABSOLUTE. Apply in every response. Do not break character.`;
+      // Strong system-level instruction with character name
+      const charName = getCharacterName(charId);
+      systemPrompt += `\n\n### RELATIONSHIP STATUS — ABSOLUTE OVERRIDE (HIGHEST PRIORITY)\n${charName}'s current relationship state with {{user}}: ${level.emoji} ${level.label}\n\n**Behavioral mandate:** ${level.prompt}\n\nThis state OVERRIDES any conflicting traits in the character description. ${charName} MUST embody this behavior in this response. Failure to comply breaks immersion.`;
 
-      // Short reminder right before AI response — last thing AI sees
-      reminderPrompt = `[Active Relationship Status: ${level.emoji} ${level.label} → ${level.prompt}]`;
+      // Author's Note — short, sharp reminder injected just before user's last message
+      reminderPrompt = `[Author's Note — Relationship: ${level.emoji} ${level.label}]\n${charName} is currently ${level.label.toLowerCase()} toward {{user}}. Behavior: ${level.prompt}\nApply this in this response.`;
 
       // Set chat variable for Lorebook keyword matching ({{getvar::love_level}} in lorebook entries)
       try {
@@ -2775,8 +2872,9 @@ function onPromptReady() {
   // Inject SYSTEM prompt at top (position 0 = before main, depth 0, role 0 = system)
   context.setExtensionPrompt(KEY_SYSTEM, systemPrompt, 0, 0, false, 0);
 
-  // Inject REMINDER right before AI response (position 1 = in-chat, depth 0 = at very bottom, role 0 = system)
-  context.setExtensionPrompt(KEY_REMINDER, reminderPrompt, 1, 0, false, 0);
+  // Inject REMINDER at Author's Note position (position 1 = in-chat, depth 1 = before last user message)
+  // This is the SAME slot as Author's Note in ST, which has very high prompt influence
+  context.setExtensionPrompt(KEY_REMINDER, reminderPrompt, 1, 1, false, 0);
 }
 
 // ===== Settings Panel Binding =====
