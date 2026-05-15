@@ -1,0 +1,989 @@
+/* ===== Love Status Extension - Theme-Agnostic CSS ===== */
+/* Uses SillyTavern CSS variables for universal theme compatibility */
+
+/* ===== Heart Widget ===== */
+#love-status-widget {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  z-index: 9990;
+  transition: opacity 0.6s ease;
+}
+
+.love-heart-btn {
+  width: 52px;
+  height: 52px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.love-heart-btn:hover {
+  transform: scale(1.1);
+}
+
+.love-heart-svg {
+  width: 52px;
+  height: 52px;
+}
+
+.love-heart-outline {
+  transition:
+    fill 0.5s ease,
+    stroke 0.5s ease;
+}
+
+.love-heart-fill {
+  fill: #ef5350;
+  transition:
+    y 0.5s ease,
+    fill 0.5s ease;
+}
+
+.love-heart-score {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--SmartThemeBodyTextColor, #fff);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+/* Heart Animations */
+@keyframes love-float-up {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-30px);
+  }
+}
+
+@keyframes love-float-down {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+}
+
+.love-heart-pulse {
+  animation: love-pulse 0.6s ease;
+}
+
+@keyframes love-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.love-heart-shake {
+  animation: love-shake 0.6s ease;
+}
+
+@keyframes love-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+/* Confetti animation for reward unlock */
+@keyframes love-confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg);
+  }
+}
+
+/* ===== Bottom Sheet ===== */
+.love-bottom-sheet-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 85vh;
+  background: var(--SmartThemeBlurTintColor, var(--SmartThemeBodyColor, #1a1a2e));
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+  z-index: 99998;
+  padding: 12px 16px 24px;
+  animation: love-sheet-slide-up 0.3s ease;
+}
+
+@keyframes love-sheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.love-bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.2));
+  border-radius: 2px;
+  margin: 0 auto 12px;
+}
+
+.love-bottom-sheet-content {
+  color: var(--SmartThemeBodyTextColor, #e0e0e0);
+}
+
+/* Sheet Header */
+.love-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.love-sheet-header h3 {
+  margin: 0;
+  font-size: 1.1em;
+  color: var(--SmartThemeBodyTextColor, #fff);
+}
+
+.love-sheet-close {
+  background: none;
+  border: none;
+  color: var(--SmartThemeBodyTextColor, #fff);
+  font-size: 1.2em;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+.love-sheet-close:hover {
+  opacity: 1;
+  background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));
+}
+
+/* Level Display */
+.love-sheet-level {
+  text-align: center;
+  padding: 8px 0;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+/* Meter */
+.love-sheet-meter {
+  margin-bottom: 16px;
+}
+
+.love-sheet-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.85em;
+}
+
+.love-sheet-score-display {
+  font-weight: 600;
+}
+
+.love-sheet-progress-track {
+  height: 8px;
+  background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.love-sheet-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f06292, #ef5350);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.love-sheet-delta {
+  text-align: center;
+  font-size: 0.8em;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+/* ===== Tab Navigation ===== */
+.love-sheet-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 12px 0;
+  background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.05));
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.love-sheet-tab {
+  flex: 1;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.78em;
+  border: none;
+  background: transparent;
+  color: var(--SmartThemeBodyTextColor, #ccc);
+  cursor: pointer;
+  border-radius: 6px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  opacity: 0.6;
+}
+
+.love-sheet-tab:hover {
+  opacity: 0.8;
+}
+
+.love-sheet-tab.active {
+  background: var(--SmartThemeBodyColor, rgba(255, 255, 255, 0.1));
+  opacity: 1;
+  font-weight: 600;
+}
+
+.love-sheet-tab-content {
+  display: none;
+  animation: love-fade-in 0.2s ease;
+}
+
+.love-sheet-tab-content.active {
+  display: block;
+}
+
+@keyframes love-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== Stats Section ===== */
+.love-sheet-stats h4,
+.love-sheet-journal h4,
+.love-sheet-top3 h4,
+.love-sheet-rewards h4,
+.love-sheet-all-chars h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.9em;
+  color: var(--SmartThemeBodyTextColor, #fff);
+}
+
+.love-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.love-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 5%, transparent);
+  border-radius: 6px;
+  font-size: 0.82em;
+}
+
+.love-stat-label {
+  opacity: 0.7;
+}
+
+.love-stat-value {
+  font-weight: 600;
+}
+
+.love-stat-value.positive {
+  color: #4caf50;
+}
+
+.love-stat-value.negative {
+  color: #f44336;
+}
+
+/* ===== Journal ===== */
+.love-journal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.love-journal-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 3%, transparent);
+  border-radius: 6px;
+  font-size: 0.82em;
+}
+
+.love-journal-date {
+  opacity: 0.5;
+  font-size: 0.85em;
+  white-space: nowrap;
+  min-width: 45px;
+}
+
+.love-journal-text {
+  flex: 1;
+}
+
+/* ===== Reward Cards (No 3D — mobile safe) ===== */
+.love-rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.love-reward-card {
+  height: 140px;
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  text-align: center;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 5%, transparent);
+  transition:
+    opacity 0.3s ease,
+    box-shadow 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.love-reward-card:active {
+  opacity: 0.8;
+}
+
+.love-reward-card .love-reward-lock-icon {
+  font-size: 1.8em;
+  margin-bottom: 6px;
+}
+
+.love-reward-card .love-reward-card-title {
+  font-size: 0.75em;
+  opacity: 0.7;
+}
+
+/* Unlocked card - show content */
+.love-reward-card.unlocked {
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 8%, transparent);
+  border-color: var(--SmartThemeQuoteColor, rgba(240, 98, 146, 0.3));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.love-reward-card.unlocked .love-reward-card-title {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.love-reward-card.unlocked img {
+  max-width: 100%;
+  max-height: 85px;
+  border-radius: 6px;
+  object-fit: cover;
+  margin-bottom: 4px;
+}
+
+/* Locked card */
+.love-reward-card.locked {
+  opacity: 0.45;
+  cursor: default;
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 3%, transparent);
+}
+
+/* ===== All Characters List ===== */
+.love-all-chars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.love-char-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 4%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.love-char-list-item:hover {
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 8%, transparent);
+}
+
+.love-char-list-emoji {
+  font-size: 1.3em;
+}
+
+.love-char-list-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.love-char-list-name {
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.love-char-list-meta {
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+
+.love-char-list-score {
+  font-weight: 600;
+  font-size: 0.85em;
+  color: var(--SmartThemeQuoteColor, #f06292);
+}
+
+.love-char-list-progress {
+  height: 4px;
+  background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 3px 0;
+}
+
+.love-char-list-progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ===== Top 3 Characters ===== */
+.love-top3-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.love-top-char-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 4%, transparent);
+  border-radius: 6px;
+}
+
+.love-top-char-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.love-top-medal {
+  font-size: 1.1em;
+}
+
+.love-top-char-id {
+  font-weight: 600;
+  font-size: 0.85em;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.love-top-char-level {
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+
+.love-top-char-score {
+  font-weight: 600;
+  font-size: 0.8em;
+  color: var(--SmartThemeQuoteColor, #f06292);
+}
+
+.love-top-char-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 0.72em;
+  opacity: 0.6;
+  padding-left: 28px;
+}
+
+/* ===== Notification ===== */
+.love-status-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--SmartThemeBlurTintColor, rgba(30, 30, 50, 0.95));
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  color: var(--SmartThemeBodyTextColor, #fff);
+}
+
+.love-status-notification-icon {
+  font-size: 1.4em;
+}
+
+.love-status-notification-text {
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+/* ===== Popup (Reward Detail) ===== */
+.love-status-popup {
+  background: var(--SmartThemeBlurTintColor, var(--SmartThemeBodyColor, #1a1a2e));
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.love-status-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
+  font-weight: 600;
+}
+
+.love-status-popup-close {
+  background: none;
+  border: none;
+  color: var(--SmartThemeBodyTextColor, #fff);
+  font-size: 1.1em;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+.love-status-popup-close:hover {
+  opacity: 1;
+}
+
+.love-status-popup-body {
+  padding: 16px;
+}
+
+/* ===== Settings Panel (ui.html) ===== */
+.love-status-settings {
+  padding: 12px;
+}
+
+.love-status-settings h3 {
+  margin: 0 0 12px 0;
+  color: var(--SmartThemeBodyTextColor, #fff);
+}
+
+.love-status-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 8%, transparent);
+  color: var(--SmartThemeBodyTextColor, #fff);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background 0.2s;
+}
+
+.love-status-btn:hover {
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 15%, transparent);
+}
+
+.love-creator-section {
+  margin-top: 12px;
+}
+
+.love-creator-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.love-creator-packs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== Creator Reward Items ===== */
+.love-creator-rewards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.love-creator-reward-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.love-creator-reward-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.love-creator-reward-thumb {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 1.2em;
+}
+
+.love-creator-reward-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.love-creator-reward-info {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+.love-creator-reward-info strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Creator Pack Header ===== */
+.love-creator-pack-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.love-creator-pack-header strong {
+  flex: 1;
+  min-width: 0;
+}
+
+.love-creator-pack-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.love-creator-rename-btn {
+  padding: 2px 6px !important;
+  font-size: 0.8em !important;
+  min-width: unset !important;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.love-creator-rename-btn:hover {
+  opacity: 1;
+}
+
+/* ===== Creator Levels Editor ===== */
+.love-creator-levels-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
+}
+
+.love-creator-levels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.love-creator-level-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 3%, transparent);
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  position: relative;
+}
+
+.love-level-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+}
+
+.love-level-range input[type='number'] {
+  width: 60px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
+  background: var(--SmartThemeBodyColor, #1a1a2e);
+  color: var(--SmartThemeBodyTextColor, #fff);
+  font-size: 0.9em;
+}
+
+.love-level-details {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.love-level-details input[type='text'] {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
+  background: var(--SmartThemeBodyColor, #1a1a2e);
+  color: var(--SmartThemeBodyTextColor, #fff);
+  font-size: 0.85em;
+}
+
+.love-level-prompt {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
+  background: var(--SmartThemeBodyColor, #1a1a2e);
+  color: var(--SmartThemeBodyTextColor, #fff);
+  font-family: monospace;
+  font-size: 0.8em;
+  resize: vertical;
+  min-height: 50px;
+}
+
+.love-level-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  font-size: 0.8em;
+}
+
+/* ===== Streak Badge ===== */
+.love-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: white;
+}
+
+/* ===== Mobile Responsive ===== */
+@media (max-width: 768px) {
+  /* Heart widget - larger touch target on mobile */
+  .love-heart-btn {
+    width: 58px;
+    height: 58px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .love-heart-svg {
+    width: 58px;
+    height: 58px;
+  }
+
+  /* Bottom sheet - full width, more padding */
+  .love-bottom-sheet-panel {
+    max-height: 90vh;
+    padding: 12px 14px 32px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .love-bottom-sheet-content {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tabs - scrollable on small screens */
+  .love-sheet-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 1px;
+  }
+
+  .love-sheet-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .love-sheet-tab {
+    padding: 10px 8px;
+    font-size: 0.75em;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  /* Stats grid - single column on very small */
+  .love-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .love-stat-item {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+
+  /* Rewards grid - 2 columns on mobile */
+  .love-rewards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .love-reward-card {
+    height: 130px;
+  }
+
+  /* Character list - larger touch targets */
+  .love-char-list-item {
+    padding: 12px 14px;
+    min-height: 48px;
+  }
+
+  .love-char-list-name {
+    font-size: 0.95em;
+  }
+
+  .love-char-list-meta {
+    font-size: 0.78em;
+  }
+
+  /* Journal items */
+  .love-journal-item {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+
+  /* Close button - larger touch target */
+  .love-sheet-close {
+    padding: 8px 12px;
+    font-size: 1.4em;
+  }
+
+  /* Popup - full width on mobile */
+  .love-status-popup {
+    width: 95%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 400px) {
+  /* Very small screens */
+  .love-sheet-tabs {
+    padding: 2px;
+  }
+
+  .love-sheet-tab {
+    padding: 8px 6px;
+    font-size: 0.7em;
+  }
+
+  .love-rewards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .love-reward-card {
+    height: 110px;
+  }
+
+  .love-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .love-bottom-sheet-panel {
+    padding: 10px 12px 28px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .love-heart-btn {
+    width: 60px;
+    height: 60px;
+  }
+
+  .love-heart-svg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .love-sheet-tab {
+    padding: 12px 8px;
+  }
+
+  .love-char-list-item {
+    padding: 14px 16px;
+  }
+
+  .love-reward-card {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .love-status-btn {
+    padding: 10px 16px;
+    font-size: 0.9em;
+  }
+}

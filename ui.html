@@ -1,0 +1,203 @@
+<div class="love-status-panel">
+  <div class="inline-drawer">
+    <div class="inline-drawer-toggle inline-drawer-header">
+      <b>❤️ สถานะความรัก</b>
+      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    </div>
+    <div class="inline-drawer-content">
+      <!-- Basic Settings -->
+      <div class="love-status-basic-settings">
+        <label class="love-status-toggle-label">
+          <input type="checkbox" id="love-status-enabled" checked />
+          <span>เปิดใช้งาน Love Status</span>
+        </label>
+
+        <label class="love-status-toggle-label">
+          <input type="checkbox" id="love-status-creator-mode" />
+          <span>โหมดครีเอเตอร์</span>
+        </label>
+
+        <label class="love-status-toggle-label">
+          <input type="checkbox" id="love-status-sound-enabled" checked />
+          <span>🔊 เสียงเอฟเฟกต์</span>
+        </label>
+
+        <div class="love-status-prompt-section">
+          <label for="love-status-prompt">Injection Prompt:</label>
+          <textarea
+            id="love-status-prompt"
+            rows="8"
+            placeholder="System prompt injection for mood detection..."
+          ></textarea>
+        </div>
+
+        <div class="love-status-actions">
+          <button id="love-status-reset-btn" class="love-status-btn danger">🔄 รีเซ็ตคะแนน (ตัวละครปัจจุบัน)</button>
+        </div>
+
+        <!-- Score Decay Settings -->
+        <div
+          class="love-status-decay-section"
+          style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08)"
+        >
+          <label class="love-status-toggle-label">
+            <input type="checkbox" id="love-status-decay-enabled" checked />
+            <span>📉 Score Decay (คะแนนลดเมื่อไม่คุย)</span>
+          </label>
+          <div id="love-decay-options" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px">
+            <div style="flex: 1; min-width: 100px">
+              <label style="font-size: 0.8em; opacity: 0.7">ลดต่อวัน</label>
+              <input
+                type="number"
+                id="love-decay-per-day"
+                min="0"
+                max="10"
+                value="1"
+                style="
+                  width: 100%;
+                  padding: 4px 6px;
+                  border-radius: 4px;
+                  border: 1px solid #444;
+                  background: #1a1a1a;
+                  color: #fff;
+                "
+              />
+            </div>
+            <div style="flex: 1; min-width: 100px">
+              <label style="font-size: 0.8em; opacity: 0.7">Grace (วัน)</label>
+              <input
+                type="number"
+                id="love-decay-grace"
+                min="0"
+                max="30"
+                value="1"
+                style="
+                  width: 100%;
+                  padding: 4px 6px;
+                  border-radius: 4px;
+                  border: 1px solid #444;
+                  background: #1a1a1a;
+                  color: #fff;
+                "
+              />
+            </div>
+            <div style="flex: 1; min-width: 100px">
+              <label style="font-size: 0.8em; opacity: 0.7">ลดสูงสุด/ครั้ง</label>
+              <input
+                type="number"
+                id="love-decay-max"
+                min="1"
+                max="50"
+                value="10"
+                style="
+                  width: 100%;
+                  padding: 4px 6px;
+                  border-radius: 4px;
+                  border: 1px solid #444;
+                  background: #1a1a1a;
+                  color: #fff;
+                "
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Creator Mode Section -->
+      <div id="love-creator-section" class="love-creator-section" style="display: none">
+        <hr style="margin: 16px 0; border-color: var(--SmartThemeBorderColor)" />
+
+        <h4 style="margin: 0 0 12px 0">🎨 โหมดครีเอเตอร์</h4>
+
+        <div class="love-creator-actions">
+          <button id="love-status-new-pack-btn" class="love-status-btn">➕ สร้างแพ็คใหม่</button>
+          <button id="love-status-import-btn" class="love-status-btn">📥 นำเข้าแพ็ค</button>
+        </div>
+
+        <div id="love-creator-packs-list" class="love-creator-packs-list">
+          <!-- Dynamically populated by JS -->
+        </div>
+
+        <!-- Status Levels Editor -->
+        <div class="love-creator-levels-section" style="margin-top: 16px">
+          <h5 style="margin: 0 0 8px 0">📊 ระดับสถานะ (Status Levels)</h5>
+          <p style="font-size: 0.8em; opacity: 0.7; margin: 0 0 8px 0">
+            กำหนดว่าแต่ละ % หมายถึงอะไร + prompt ที่จะ inject ให้ LLM
+          </p>
+          <div id="love-creator-levels-list" class="love-creator-levels-list">
+            <!-- Dynamically populated by JS -->
+          </div>
+          <button id="love-status-add-level-btn" class="love-status-btn" style="margin-top: 8px">+ เพิ่มระดับ</button>
+        </div>
+
+        <!-- Start Score & Card Embed -->
+        <div
+          class="love-creator-card-section"
+          style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--SmartThemeBorderColor)"
+        >
+          <h5 style="margin: 0 0 8px 0">⚙️ ตั้งค่าตัวละคร</h5>
+
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px">
+            <label for="love-status-start-score" style="font-size: 0.85em; white-space: nowrap">คะแนนเริ่มต้น:</label>
+            <input
+              type="number"
+              id="love-status-start-score"
+              min="0"
+              max="100"
+              value="0"
+              style="
+                width: 70px;
+                padding: 4px 6px;
+                border-radius: 4px;
+                border: 1px solid var(--SmartThemeBorderColor);
+                background: var(--SmartThemeBodyColor);
+                color: var(--SmartThemeBodyTextColor);
+              "
+            />
+            <span style="font-size: 0.75em; opacity: 0.6">(%)</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <button
+              id="love-status-embed-card-btn"
+              class="love-status-btn"
+              style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600"
+            >
+              📤 ส่งออก Card Data (JSON)
+            </button>
+            <button
+              id="love-status-import-card-btn"
+              class="love-status-btn"
+              style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; font-weight: 600"
+            >
+              📥 นำเข้า Card Data (JSON)
+            </button>
+            <p style="font-size: 0.75em; opacity: 0.6; margin: 0">
+              📤 ส่งออก: สร้างไฟล์ JSON สำหรับแจกจ่าย (รูปจะถูกเข้ารหัส)<br />
+              📥 นำเข้า: โหลดไฟล์ JSON จาก Creator เพื่อใช้กับตัวละครปัจจุบัน
+            </p>
+          </div>
+        </div>
+
+        <div class="love-creator-help">
+          <p style="font-size: 0.8em; opacity: 0.7; margin: 12px 0 0 0">
+            <strong>วิธีใช้:</strong><br />
+            • สร้างแพ็คพร้อมรางวัลที่กำหนดเอง<br />
+            • ใส่ URL รูปภาพสำหรับรางวัล<br />
+            • ส่งออก/นำเข้าแพ็คเป็นไฟล์ JSON<br />
+            • เกณฑ์เป็น % ของคะแนนสูงสุด<br />
+            • ตั้งค่าระดับสถานะ + prompt ตาม level<br />
+            • ส่งออก Card Data เพื่อแจกจ่ายให้ user อื่น
+          </p>
+          <p style="font-size: 0.8em; opacity: 0.7; margin: 8px 0 0 0">
+            <strong>📐 ขนาดรูปแนะนำ:</strong><br />
+            • ขนาด: 400×400px หรือ 400×600px<br />
+            • Format: JPEG หรือ WebP<br />
+            • ไฟล์ไม่เกิน 500KB<br />
+            • อัตราส่วน: 1:1 หรือ 2:3
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
