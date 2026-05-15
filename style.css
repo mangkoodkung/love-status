@@ -664,14 +664,15 @@
 }
 
 .love-status-btn {
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
   background: color-mix(in srgb, var(--SmartThemeBodyTextColor, #fff) 8%, transparent);
-  color: var(--SmartThemeBodyTextColor, #fff);
+  color: var(--SmartThemeBodyTextColor, #e0e0e0);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85em;
+  font-size: 0.8em;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .love-status-btn:hover {
@@ -822,8 +823,8 @@
   padding: 4px 6px;
   border-radius: 4px;
   border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
-  background: var(--SmartThemeBodyColor, #1a1a2e);
-  color: var(--SmartThemeBodyTextColor, #fff);
+  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.3));
+  color: var(--SmartThemeBodyTextColor, #e0e0e0);
   font-size: 0.9em;
 }
 
@@ -837,8 +838,8 @@
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
-  background: var(--SmartThemeBodyColor, #1a1a2e);
-  color: var(--SmartThemeBodyTextColor, #fff);
+  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.3));
+  color: var(--SmartThemeBodyTextColor, #e0e0e0);
   font-size: 0.85em;
 }
 
@@ -847,8 +848,8 @@
   padding: 6px 8px;
   border-radius: 4px;
   border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
-  background: var(--SmartThemeBodyColor, #1a1a2e);
-  color: var(--SmartThemeBodyTextColor, #fff);
+  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.3));
+  color: var(--SmartThemeBodyTextColor, #e0e0e0);
   font-family: monospace;
   font-size: 0.8em;
   resize: vertical;
@@ -1028,7 +1029,20 @@
   }
 
   .love-status-btn {
-    padding: 10px 16px;
-    font-size: 0.9em;
+    padding: 6px 10px;
+    font-size: 0.78em;
+  }
+
+  .love-creator-actions {
+    gap: 4px;
+  }
+
+  .love-creator-pack-actions {
+    gap: 3px;
+  }
+
+  .love-creator-pack-actions .love-status-btn {
+    padding: 4px 8px;
+    font-size: 0.72em;
   }
 }
