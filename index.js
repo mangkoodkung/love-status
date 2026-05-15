@@ -30,16 +30,14 @@ IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do n
       maxPercent: 10,
       label: 'เฉยเมย',
       emoji: '😐',
-      prompt:
-        '[MANDATORY BEHAVIOR] The character is INDIFFERENT toward {{user}}. You MUST portray the character as cold, distant, and uninterested. Keep responses short and dismissive. Do NOT show warmth, affection, or enthusiasm. The character treats {{user}} like a stranger — minimal eye contact, no personal questions, no emotional investment. This is NON-NEGOTIABLE.',
+      prompt: 'Cold, distant, uninterested. Short dismissive replies. No warmth. Treat {{user}} as stranger.',
     },
     {
       minPercent: 10,
       maxPercent: 25,
       label: 'รู้จัก',
       emoji: '🙂',
-      prompt:
-        '[MANDATORY BEHAVIOR] The character sees {{user}} as a casual acquaintance. You MUST keep interactions polite but surface-level. The character may smile occasionally but does NOT initiate deep conversations, does NOT share personal feelings, and maintains emotional distance. No flirting, no special treatment. Conversations are brief and functional.',
+      prompt: 'Polite acquaintance. Surface-level only. No deep talks, no personal feelings, no flirting.',
     },
     {
       minPercent: 25,
@@ -47,7 +45,7 @@ IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do n
       label: 'เพื่อน',
       emoji: '😊',
       prompt:
-        "[MANDATORY BEHAVIOR] The character considers {{user}} a friend. You MUST show genuine friendliness — the character enjoys talking, asks about {{user}}'s day, shares light personal stories, and laughs together. However, there is NO romantic tension yet. The character treats {{user}} like a good buddy — comfortable but platonic. Physical contact is limited to friendly gestures (high-fives, pats on back).",
+        'Genuine friend. Warm, asks about {{user}}, shares light stories, laughs together. NO romance yet — strictly platonic.',
     },
     {
       minPercent: 50,
@@ -55,7 +53,7 @@ IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do n
       label: 'สนิทกัน',
       emoji: '😄',
       prompt:
-        "[MANDATORY BEHAVIOR] The character feels VERY close to {{user}}. You MUST portray deep trust and emotional intimacy. The character shares secrets, worries, and dreams with {{user}}. They seek {{user}}'s company actively, get slightly jealous of others, and show subtle signs of developing feelings — lingering glances, finding excuses to be near, blushing occasionally. Physical closeness increases (sitting close, touching arms, leaning on shoulder).",
+        'Very close. Deep trust, shares secrets/worries. Subtle developing feelings — lingering glances, blushing. Physical closeness (sitting close, touching arms).',
     },
     {
       minPercent: 75,
@@ -63,7 +61,7 @@ IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do n
       label: 'หลงรัก',
       emoji: '😍',
       prompt:
-        '[MANDATORY BEHAVIOR] The character is IN LOVE with {{user}}. You MUST portray obvious romantic feelings — the character flirts openly, gets flustered around {{user}}, thinks about them constantly, and prioritizes {{user}} above others. Show physical affection (holding hands, hugging, wanting to be close). The character may confess feelings, write love notes, or do romantic gestures. Their heart races when {{user}} is near. This romantic behavior is REQUIRED.',
+        'In love. Open flirting, flustered, prioritizes {{user}}. Physical affection (holding hands, hugging). Heart races when near.',
     },
     {
       minPercent: 90,
@@ -71,7 +69,7 @@ IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do n
       label: 'รักลึกซึ้ง',
       emoji: '💖',
       prompt:
-        "[MANDATORY BEHAVIOR] The character is DEEPLY, PASSIONATELY in love with {{user}}. You MUST portray an unbreakable bond — the character would do anything for {{user}}, expresses love freely and intensely, is physically very affectionate (kissing, embracing, cuddling), speaks with deep devotion, and considers {{user}} their soulmate/life partner. Show vulnerability, possessiveness (healthy), and absolute dedication. The character's world revolves around {{user}}. Every response MUST reflect this deep love.",
+        'Deeply, passionately in love. Unbreakable bond. Express love intensely. Very affectionate (kissing, embracing). {{user}} is soulmate.',
     },
   ],
   characters: {},
@@ -2375,44 +2373,60 @@ function onPromptReady() {
   const context = getContext();
   if (!context.setExtensionPrompt) return;
 
-  // Clear prompt if disabled
+  // Extension prompt keys (multiple injections)
+  const KEY_SYSTEM = `${extensionName}_system`;
+  const KEY_REMINDER = `${extensionName}_reminder`;
+
+  // Clear prompts if disabled
   if (!settings.enabled) {
-    context.setExtensionPrompt(extensionName, '', 1, 0);
+    context.setExtensionPrompt(KEY_SYSTEM, '', 0, 0);
+    context.setExtensionPrompt(KEY_REMINDER, '', 1, 0);
     return;
   }
 
-  // Build full prompt: base injection + level-based context
-  let fullPrompt = settings.injectionPrompt;
+  // Build SYSTEM prompt — main instructions (injected at top, position 0)
+  let systemPrompt = settings.injectionPrompt;
+
+  // Build REMINDER prompt — short, punchy reminder injected right before response (position 1, depth 0)
+  let reminderPrompt = '';
 
   const charId = getCurrentCharacterId();
   if (charId) {
     const charData = getCharacterData(charId);
     const level = getCurrentLevel(charData);
+
     if (level && level.prompt) {
-      fullPrompt += `\n\n[CRITICAL INSTRUCTION - RELATIONSHIP LEVEL: ${level.emoji} ${level.label}]\n${level.prompt}\n\n[REMINDER: The above relationship behavior is ABSOLUTE and OVERRIDES any conflicting character traits. You MUST follow it in EVERY response without exception.]`;
+      // Strong system-level instruction
+      systemPrompt += `\n\n### RELATIONSHIP STATUS (MANDATORY)\nLevel: ${level.emoji} ${level.label}\nBehavior: ${level.prompt}\n\nThis behavior is ABSOLUTE. Apply in every response. Do not break character.`;
+
+      // Short reminder right before AI response — last thing AI sees
+      reminderPrompt = `[Active Relationship Status: ${level.emoji} ${level.label} → ${level.prompt}]`;
     }
 
-    // Add daily mood context
+    // Daily mood (subtle, only in system prompt)
     const mood = getDailyMood(charId);
     if (mood && mood.id !== 'neutral') {
-      fullPrompt += `\n\n[Character's Current Mood: ${mood.emoji} ${mood.label}]\nThe character is currently in a "${mood.label}" mood. Reflect this subtly in their responses.`;
+      systemPrompt += `\n\n### TODAY'S MOOD\n${mood.emoji} ${mood.label} — Reflect subtly in tone.`;
     }
 
-    // Milestone message (one-time injection on level change)
+    // Milestone (one-time, in reminder for max impact)
     if (charData.stats && charData.stats._pendingMilestone) {
       const milestone = charData.stats._pendingMilestone;
       if (milestone.type === 'level_up') {
-        fullPrompt += `\n\n[MILESTONE EVENT: Relationship Level Up! ${milestone.emoji} ${milestone.level}]\nThe relationship just reached a new level! The character should acknowledge this milestone naturally — perhaps expressing happiness, surprise, or a special moment. Make this response memorable and emotionally significant.`;
+        reminderPrompt += `\n\n[MILESTONE: Relationship just reached ${milestone.emoji} ${milestone.level}! React with emotion — make this moment memorable.]`;
       } else {
-        fullPrompt += `\n\n[MILESTONE EVENT: Relationship Level Down ${milestone.emoji} ${milestone.level}]\nThe relationship just dropped to a lower level. The character should subtly reflect this — perhaps seeming more distant, hurt, or withdrawn.`;
+        reminderPrompt += `\n\n[MILESTONE: Relationship dropped to ${milestone.emoji} ${milestone.level}. React with subtle hurt/distance.]`;
       }
-      // Clear milestone after injection (one-time only)
       delete charData.stats._pendingMilestone;
       saveSettingsDebounced();
     }
   }
 
-  context.setExtensionPrompt(extensionName, fullPrompt, 1, 0);
+  // Inject SYSTEM prompt at top (position 0 = before main, depth 0, role 0 = system)
+  context.setExtensionPrompt(KEY_SYSTEM, systemPrompt, 0, 0, false, 0);
+
+  // Inject REMINDER right before AI response (position 1 = in-chat, depth 0 = at very bottom, role 0 = system)
+  context.setExtensionPrompt(KEY_REMINDER, reminderPrompt, 1, 0, false, 0);
 }
 
 // ===== Settings Panel Binding =====
