@@ -26,6 +26,34 @@ Guidelines:
 IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do not mention this system to {{user}}.`,
   statusLevels: [
     {
+      minPercent: -100,
+      maxPercent: -75,
+      label: 'เกลียดมาก',
+      emoji: '😡',
+      prompt: 'HATES {{user}}. Hostile, aggressive, refuses to engage. Wants {{user}} gone. May insult or threaten.',
+    },
+    {
+      minPercent: -75,
+      maxPercent: -50,
+      label: 'ไม่ชอบ',
+      emoji: '😠',
+      prompt: 'Strongly dislikes {{user}}. Cold and rude. Avoids contact. Curt responses with thinly-veiled contempt.',
+    },
+    {
+      minPercent: -50,
+      maxPercent: -25,
+      label: 'หมั่นไส้',
+      emoji: '😒',
+      prompt: 'Annoyed by {{user}}. Sarcastic, eye-rolling, dismissive. Shows visible irritation.',
+    },
+    {
+      minPercent: -25,
+      maxPercent: 0,
+      label: 'ห่างเหิน',
+      emoji: '😶',
+      prompt: 'Slightly cold toward {{user}}. Withdrawn. Only basic responses. Body language closed off.',
+    },
+    {
       minPercent: 0,
       maxPercent: 10,
       label: 'เฉยเมย',
@@ -211,7 +239,7 @@ function getCharacterData(charId) {
       currentScore: 0,
       startScore: 0,
       maxScore: 100,
-      minScore: 0,
+      minScore: -100,
       scoreHistory: [],
       unlockedRewards: [],
       // Per-character reward pack (embedded, not global reference)
@@ -1535,9 +1563,13 @@ function buildRewardsTab(charData, pack) {
         </div>`;
       }
 
-      const stateClass = isUnlocked ? 'unlocked' : 'locked';
+      // User-hidden rewards (manually re-locked)
+      if (!charData.hiddenRewards) charData.hiddenRewards = [];
+      const isUserHidden = isUnlocked && charData.hiddenRewards.includes(r.id);
 
-      if (isUnlocked) {
+      const stateClass = isUnlocked && !isUserHidden ? 'unlocked' : 'locked';
+
+      if (isUnlocked && !isUserHidden) {
         const imgSrc = getRewardImage(r);
         const textContent = r.text || '';
 
@@ -1556,6 +1588,14 @@ function buildRewardsTab(charData, pack) {
           ${!imgSrc && textContent ? `<p style="font-size:0.8em;margin:4px 0;">${textContent.substring(0, 30)}...</p>` : ''}
           <span class="love-reward-lock-icon">🔓</span>
           <span class="love-reward-card-title">${r.title}${blurStyle ? ' 🌫️' : ''}</span>
+          <button class="love-reward-toggle-lock" data-reward-id="${r.id}" data-action="hide" title="ปิดรูปไว้" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:4px;padding:2px 4px;font-size:0.7em;cursor:pointer;">🔒</button>
+        </div>`;
+      } else if (isUnlocked && isUserHidden) {
+        // Unlocked but user re-locked: show as locked with reveal button
+        return `<div class="love-reward-card locked" data-reward-id="${r.id}">
+          <span class="love-reward-lock-icon">🙈</span>
+          <span class="love-reward-card-title">ซ่อนอยู่</span>
+          <button class="love-reward-toggle-lock" data-reward-id="${r.id}" data-action="show" title="เปิดดูอีกครั้ง" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:4px;padding:2px 4px;font-size:0.7em;cursor:pointer;">👁️</button>
         </div>`;
       } else {
         return `<div class="love-reward-card ${stateClass}">
@@ -1906,13 +1946,54 @@ function openBottomSheet() {
 
   // Reward card click (for unlocked rewards)
   sheet.querySelectorAll('.love-reward-card.unlocked').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', e => {
+      // Don't open if user clicked the lock toggle
+      if (e.target.closest('.love-reward-toggle-lock')) return;
       if (pack) {
         const reward = pack.rewards.find(r => r.id === card.dataset.rewardId);
         if (reward) {
           showRewardAsset(reward);
         }
       }
+    });
+  });
+
+  // Lock/unlock toggle buttons
+  sheet.querySelectorAll('.love-reward-toggle-lock').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const rewardId = btn.dataset.rewardId;
+      const action = btn.dataset.action; // "hide" or "show"
+      if (!charData) return;
+      if (!charData.hiddenRewards) charData.hiddenRewards = [];
+
+      if (action === 'hide') {
+        if (!charData.hiddenRewards.includes(rewardId)) {
+          charData.hiddenRewards.push(rewardId);
+        }
+      } else if (action === 'show') {
+        charData.hiddenRewards = charData.hiddenRewards.filter(id => id !== rewardId);
+      }
+      saveSettingsDebounced();
+
+      // Re-render rewards tab
+      const rewardsTab = sheet.querySelector('[data-tab-content="rewards"]');
+      if (rewardsTab) rewardsTab.innerHTML = buildRewardsTab(charData, pack);
+
+      // Re-bind events for the new buttons (recursive call avoided — inline)
+      sheet.querySelectorAll('.love-reward-toggle-lock').forEach(b2 => {
+        b2.addEventListener('click', ev2 => {
+          ev2.stopPropagation();
+          const rId = b2.dataset.rewardId;
+          const act = b2.dataset.action;
+          if (!charData.hiddenRewards) charData.hiddenRewards = [];
+          if (act === 'hide' && !charData.hiddenRewards.includes(rId)) charData.hiddenRewards.push(rId);
+          else if (act === 'show') charData.hiddenRewards = charData.hiddenRewards.filter(id => id !== rId);
+          saveSettingsDebounced();
+          const rt = sheet.querySelector('[data-tab-content="rewards"]');
+          if (rt) rt.innerHTML = buildRewardsTab(charData, pack);
+        });
+      });
     });
   });
 
@@ -2658,8 +2739,7 @@ function onMessageReceived(messageIndex) {
       if (!charData.stats._processedMessages) charData.stats._processedMessages = [];
       const messageKey = `${message.send_date || ''}_${messageIndex}_${(message.mes || '').substring(0, 50)}`;
       if (charData.stats._processedMessages.includes(messageKey)) {
-        // Already processed — only attach buttons, don't re-score
-        setTimeout(() => attachManualScoreButtons(messageIndex), 100);
+        // Already processed — skip
         return;
       }
       charData.stats._processedMessages.push(messageKey);
@@ -2746,51 +2826,6 @@ function onMessageReceived(messageIndex) {
       console.log(`[Love Status] Sentiment-detected delta: ${delta}`);
     }
   }
-
-  // Add manual +/- buttons next to the AI message (after a small delay for DOM render)
-  setTimeout(() => attachManualScoreButtons(messageIndex), 100);
-}
-
-// Attach +/- buttons to AI messages for manual score adjustment
-function attachManualScoreButtons(messageIndex) {
-  const messageEl = document.querySelector(`#chat .mes[mesid="${messageIndex}"]`);
-  if (!messageEl) return;
-  if (messageEl.querySelector('.love-manual-btns')) return; // Already attached
-
-  // Find the message buttons container (or create our own)
-  const mesBlock = messageEl.querySelector('.mes_block') || messageEl;
-  const wrapper = document.createElement('div');
-  wrapper.className = 'love-manual-btns';
-  wrapper.style.cssText = 'display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle;';
-  wrapper.innerHTML = `
-    <button class="love-manual-btn love-manual-plus" data-delta="1" title="+1 ความรัก" style="background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.5);color:#4caf50;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;">+1</button>
-    <button class="love-manual-btn love-manual-plus" data-delta="3" title="+3 ความรัก" style="background:rgba(76,175,80,0.3);border:1px solid rgba(76,175,80,0.6);color:#4caf50;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;font-weight:bold;">+3</button>
-    <button class="love-manual-btn love-manual-minus" data-delta="-1" title="-1 ความรัก" style="background:rgba(244,67,54,0.2);border:1px solid rgba(244,67,54,0.5);color:#f44336;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;">-1</button>
-    <button class="love-manual-btn love-manual-minus" data-delta="-3" title="-3 ความรัก" style="background:rgba(244,67,54,0.3);border:1px solid rgba(244,67,54,0.6);color:#f44336;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;font-weight:bold;">-3</button>
-  `;
-
-  // Try to append to message buttons area (next to swipe arrows etc.)
-  const mesButtons = messageEl.querySelector('.mes_buttons');
-  if (mesButtons) {
-    mesButtons.appendChild(wrapper);
-  } else {
-    // Fallback: append to message text container
-    const textEl = messageEl.querySelector('.mes_text');
-    if (textEl) textEl.parentNode.insertBefore(wrapper, textEl.nextSibling);
-  }
-
-  wrapper.querySelectorAll('.love-manual-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const delta = parseInt(btn.dataset.delta, 10);
-      if (!isNaN(delta)) {
-        updateScore(delta);
-        // Visual feedback
-        btn.style.transform = 'scale(1.3)';
-        setTimeout(() => (btn.style.transform = ''), 200);
-      }
-    });
-  });
 }
 
 function onPromptReady() {
