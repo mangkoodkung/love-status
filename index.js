@@ -710,6 +710,90 @@ function removeLoveTags(messageText) {
   return messageText.replace(/\s*\[LOVE:\s*[+-]?\d+\]\s*/gi, '').trim();
 }
 
+// ===== Sentiment Analyzer (Thai + English) =====
+// Scores message content based on keyword/phrase patterns to estimate affection delta
+
+const SENTIMENT_KEYWORDS = {
+  // Strong positive (+3 to +5)
+  strongPositive: [
+    // Thai
+    'รัก', 'หลงรัก', 'รักมาก', 'รักที่สุด', 'แต่งงาน', 'อยากอยู่ด้วย', 'ตลอดไป', 'คนเดียว',
+    'หัวใจ', 'จุ๊บ', 'หอม', 'กอด', 'จับมือ', 'น่ารัก', 'สวยมาก', 'หล่อมาก', 'มหัศจรรย์',
+    // English
+    'love you', 'i love', 'kiss', 'hug', 'embrace', 'forever', 'soulmate', 'marry', 'beautiful',
+    'gorgeous', 'adore', 'cherish', 'precious', 'darling', 'sweetheart',
+  ],
+  // Mild positive (+1 to +2)
+  mildPositive: [
+    // Thai
+    'ยิ้ม', 'หัวเราะ', 'ขอบคุณ', 'ดีจัง', 'น่ารัก', 'สนุก', 'ดี', 'ชอบ', 'พอใจ', 'อบอุ่น',
+    'มีความสุข', 'สดชื่น', 'เพื่อน', 'ใส่ใจ', 'ห่วง', 'ช่วย',
+    // English
+    'smile', 'laugh', 'thank', 'happy', 'glad', 'enjoy', 'like', 'nice', 'sweet', 'friend',
+    'care', 'help', 'kind', 'warm', 'cute',
+  ],
+  // Mild negative (-1 to -2)
+  mildNegative: [
+    // Thai
+    'เบื่อ', 'น่ารำคาญ', 'งง', 'ไม่เข้าใจ', 'ไม่อยาก', 'ไม่ชอบ', 'น่าเบื่อ', 'อึดอัด',
+    'รำคาญ', 'แปลก', 'ไม่ดี', 'ไม่โอเค',
+    // English
+    'annoyed', 'bored', 'awkward', 'weird', 'confused', 'tired', 'meh', 'whatever', 'hmph',
+  ],
+  // Strong negative (-3 to -5)
+  strongNegative: [
+    // Thai
+    'เกลียด', 'โกรธ', 'ผิดหวัง', 'เสียใจ', 'ร้องไห้', 'ทรยศ', 'หักหลัง', 'แย่มาก', 'ทำไม',
+    'ไปให้พ้น', 'อย่ามายุ่ง', 'น่าเกลียด', 'แย่', 'ใจสลาย', 'หมดรัก',
+    // English
+    'hate', 'angry', 'furious', 'betrayed', 'leave', 'go away', 'stop', 'disgusting', 'horrible',
+    'cruel', 'broken heart', 'cry', 'tears', 'sob', 'devastated',
+  ],
+};
+
+function analyzeSentiment(text) {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  let score = 0;
+  let matches = 0;
+
+  // Strong positive: +2 each, capped at +5
+  for (const kw of SENTIMENT_KEYWORDS.strongPositive) {
+    if (lower.includes(kw.toLowerCase())) {
+      score += 2;
+      matches++;
+    }
+  }
+  // Mild positive: +1 each
+  for (const kw of SENTIMENT_KEYWORDS.mildPositive) {
+    if (lower.includes(kw.toLowerCase())) {
+      score += 1;
+      matches++;
+    }
+  }
+  // Mild negative: -1 each
+  for (const kw of SENTIMENT_KEYWORDS.mildNegative) {
+    if (lower.includes(kw.toLowerCase())) {
+      score -= 1;
+      matches++;
+    }
+  }
+  // Strong negative: -2 each
+  for (const kw of SENTIMENT_KEYWORDS.strongNegative) {
+    if (lower.includes(kw.toLowerCase())) {
+      score -= 2;
+      matches++;
+    }
+  }
+
+  // Clamp to -5..+5
+  score = Math.max(-5, Math.min(5, score));
+
+  // Return null if no keywords matched (don't change score)
+  if (matches === 0) return null;
+  return score;
+}
+
 function updateScore(delta) {
   const charId = getCurrentCharacterId();
   if (!charId) return;
@@ -2428,16 +2512,77 @@ function onMessageReceived(messageIndex) {
   }
 
   const originalText = message.mes;
-  const delta = parseLoveTag(originalText);
 
-  if (delta !== null) {
+  // Primary: try parsing [LOVE:X] tag if AI cooperated
+  let delta = parseLoveTag(originalText);
+  let source = 'tag';
+
+  // Fallback: sentiment analysis if no tag found
+  if (delta === null) {
+    delta = analyzeSentiment(originalText);
+    source = 'sentiment';
+  }
+
+  // Clean tag from message regardless
+  if (parseLoveTag(originalText) !== null) {
     message.mes = removeLoveTags(originalText);
     const messageElement = document.querySelector(`#chat .mes[mesid="${messageIndex}"] .mes_text`);
     if (messageElement) {
       messageElement.innerHTML = messageElement.innerHTML.replace(/\s*\[LOVE:\s*[+-]?\d+\]\s*/gi, '');
     }
-    updateScore(delta);
   }
+
+  if (delta !== null && delta !== 0) {
+    updateScore(delta);
+    if (source === 'sentiment') {
+      console.log(`[Love Status] Sentiment-detected delta: ${delta}`);
+    }
+  }
+
+  // Add manual +/- buttons next to the AI message (after a small delay for DOM render)
+  setTimeout(() => attachManualScoreButtons(messageIndex), 100);
+}
+
+// Attach +/- buttons to AI messages for manual score adjustment
+function attachManualScoreButtons(messageIndex) {
+  const messageEl = document.querySelector(`#chat .mes[mesid="${messageIndex}"]`);
+  if (!messageEl) return;
+  if (messageEl.querySelector('.love-manual-btns')) return; // Already attached
+
+  // Find the message buttons container (or create our own)
+  const mesBlock = messageEl.querySelector('.mes_block') || messageEl;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'love-manual-btns';
+  wrapper.style.cssText = 'display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle;';
+  wrapper.innerHTML = `
+    <button class="love-manual-btn love-manual-plus" data-delta="1" title="+1 ความรัก" style="background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.5);color:#4caf50;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;">+1</button>
+    <button class="love-manual-btn love-manual-plus" data-delta="3" title="+3 ความรัก" style="background:rgba(76,175,80,0.3);border:1px solid rgba(76,175,80,0.6);color:#4caf50;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;font-weight:bold;">+3</button>
+    <button class="love-manual-btn love-manual-minus" data-delta="-1" title="-1 ความรัก" style="background:rgba(244,67,54,0.2);border:1px solid rgba(244,67,54,0.5);color:#f44336;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;">-1</button>
+    <button class="love-manual-btn love-manual-minus" data-delta="-3" title="-3 ความรัก" style="background:rgba(244,67,54,0.3);border:1px solid rgba(244,67,54,0.6);color:#f44336;border-radius:4px;padding:2px 6px;font-size:0.75em;cursor:pointer;font-weight:bold;">-3</button>
+  `;
+
+  // Try to append to message buttons area (next to swipe arrows etc.)
+  const mesButtons = messageEl.querySelector('.mes_buttons');
+  if (mesButtons) {
+    mesButtons.appendChild(wrapper);
+  } else {
+    // Fallback: append to message text container
+    const textEl = messageEl.querySelector('.mes_text');
+    if (textEl) textEl.parentNode.insertBefore(wrapper, textEl.nextSibling);
+  }
+
+  wrapper.querySelectorAll('.love-manual-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const delta = parseInt(btn.dataset.delta, 10);
+      if (!isNaN(delta)) {
+        updateScore(delta);
+        // Visual feedback
+        btn.style.transform = 'scale(1.3)';
+        setTimeout(() => btn.style.transform = '', 200);
+      }
+    });
+  });
 }
 
 function onPromptReady() {
