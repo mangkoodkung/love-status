@@ -1,6 +1,51 @@
 /* ===== Love Status Extension - Theme-Agnostic CSS ===== */
 /* Uses SillyTavern CSS variables for universal theme compatibility */
 
+/* ===== Global Form Elements (Theme-Adaptive) ===== */
+.love-status-panel input[type='text'],
+.love-status-panel input[type='number'],
+.love-status-panel input[type='date'],
+.love-status-panel textarea,
+.love-status-panel select,
+.love-status-popup input[type='text'],
+.love-status-popup input[type='number'],
+.love-status-popup input[type='date'],
+.love-status-popup textarea,
+.love-status-popup select,
+#love-reward-editor input[type='text'],
+#love-reward-editor input[type='number'],
+#love-reward-editor input[type='date'],
+#love-reward-editor textarea,
+#love-reward-editor select {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
+  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.3));
+  color: var(--SmartThemeBodyTextColor, #e0e0e0);
+  font-size: 0.9em;
+  transition: border-color 0.2s;
+}
+
+.love-status-panel input:focus,
+.love-status-panel textarea:focus,
+.love-status-panel select:focus,
+.love-status-popup input:focus,
+.love-status-popup textarea:focus,
+.love-status-popup select:focus,
+#love-reward-editor input:focus,
+#love-reward-editor textarea:focus,
+#love-reward-editor select:focus {
+  outline: none;
+  border-color: var(--SmartThemeQuoteColor, rgba(255, 107, 107, 0.6));
+}
+
+.love-status-panel label,
+.love-status-popup label,
+#love-reward-editor label {
+  color: var(--SmartThemeBodyTextColor, #e0e0e0);
+}
+
 /* ===== Heart Widget ===== */
 #love-status-widget {
   position: fixed;

@@ -2093,7 +2093,7 @@ function openRewardEditor(packId, rewardIndex) {
                     <div class="love-editor-field" id="love-editor-image-section">
                         <label>🔗 ลิงก์รูปภาพ (URL) ${hasImage ? '<span style="color:#4ecdc4;font-size:0.85em;">✅ มีรูปแล้ว</span>' : ''}</label>
                         <div id="love-editor-url-panel">
-                            <input type="text" id="love-editor-image-url" placeholder="${hasImage ? 'ใส่ URL ใหม่เพื่อเปลี่ยนรูป...' : 'https://example.com/image.jpg'}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #444;background:#1a1a1a;color:#fff;" value="" />
+                            <input type="text" id="love-editor-image-url" placeholder="${hasImage ? 'ใส่ URL ใหม่เพื่อเปลี่ยนรูป...' : 'https://example.com/image.jpg'}" value="" />
                             <div style="display:flex;gap:6px;margin-top:8px;">
                               <button type="button" id="love-editor-url-load" class="love-status-btn" style="padding:6px 12px;">👁️ ดูตัวอย่าง</button>
                               ${hasImage ? `<button type="button" id="love-editor-remove-img" class="love-status-btn danger" style="padding:6px 12px;">🗑️ ลบรูป</button>` : ''}
@@ -2112,7 +2112,7 @@ function openRewardEditor(packId, rewardIndex) {
                         </label>
                         <div style="flex:1;min-width:140px;">
                             <label style="font-size:0.8em;opacity:0.7;">⏰ หมดอายุ (ไม่บังคับ)</label>
-                            <input type="date" id="love-editor-expires" value="${reward.expiresAt || ''}" style="width:100%;padding:4px 6px;border-radius:4px;border:1px solid #444;background:#1a1a1a;color:#fff;" />
+                            <input type="date" id="love-editor-expires" value="${reward.expiresAt || ''}" />
                         </div>
                     </div>
                     <button class="love-status-btn" id="love-editor-save" style="width:100%;margin-top:12px;padding:10px;">💾 บันทึก</button>
