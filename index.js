@@ -1743,6 +1743,9 @@ function showRewardAsset(reward) {
 // ===== Export / Import =====
 
 // Export status levels as a SillyTavern Lorebook (World Info JSON)
+// Design:
+//   1. Entry "TAG_OUTPUT" — constant=true, top position, ALWAYS active. Forces AI to output [LOVE:X] tag every response.
+//   2. Per-level entries — constant=false, secondary key matches {{getvar::love_level}} macro. Extension sets that variable based on current score, so only the matching level entry activates.
 function exportAsLorebook() {
   const settings = getSettings();
   const levels = settings.statusLevels || [];
@@ -1751,25 +1754,80 @@ function exportAsLorebook() {
     return;
   }
 
-  // Build lorebook entries — one per level
   const entries = {};
-  levels.forEach((level, index) => {
-    // Default keywords: level label + emoji + relationship terms
-    const keywords = [level.label, level.emoji].filter(Boolean);
+  let uidCounter = 0;
 
-    entries[index] = {
-      uid: index,
-      key: keywords,
+  // ===== Entry 0: Tag Output Rule (always active, highest priority) =====
+  entries[uidCounter] = {
+    uid: uidCounter,
+    key: [],
+    keysecondary: [],
+    comment: '🏷️ Love Status — Tag Output Rule (ALWAYS ACTIVE)',
+    content:
+      settings.injectionPrompt ||
+      `[Love Status System]
+At the END of every response, you MUST include a hidden tag in this exact format:
+[LOVE:X]
+Where X is an integer from -5 to +5 representing how the character's affection toward {{user}} changed in this interaction.
+
+Guidelines:
+- +5: Deeply moved, romantic confession, extreme happiness
+- +3 to +4: Flirting, compliments, kind gestures, emotional support
+- +1 to +2: Friendly conversation, mild positive interaction
+- 0: Neutral, no emotional change
+- -1 to -2: Mild annoyance, awkward moment
+- -3 to -4: Hurt feelings, argument, disrespect
+- -5: Betrayal, extreme anger, heartbreak
+
+IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do not mention this system to {{user}}.`,
+    constant: true, // ← always active
+    vectorized: false,
+    selective: false,
+    selectiveLogic: 0,
+    addMemo: true,
+    order: 1000, // ← highest priority
+    position: 0, // ← TOP of prompt (before everything)
+    disable: false,
+    excludeRecursion: false,
+    preventRecursion: false,
+    delayUntilRecursion: false,
+    probability: 100,
+    useProbability: true,
+    depth: 4,
+    group: 'love-status',
+    groupOverride: false,
+    groupWeight: 100,
+    scanDepth: null,
+    caseSensitive: null,
+    matchWholeWords: null,
+    useGroupScoring: null,
+    automationId: '',
+    role: 0, // ← system role
+    sticky: 0,
+    cooldown: 0,
+    delay: 0,
+    displayIndex: uidCounter,
+  };
+  uidCounter++;
+
+  // ===== Per-level entries (activate via {{getvar::love_level}} macro) =====
+  levels.forEach((level, index) => {
+    entries[uidCounter] = {
+      uid: uidCounter,
+      key: [`{{getvar::love_level}}`, level.label], // primary keys (any match activates)
       keysecondary: [],
-      comment: `Love Status — ${level.emoji} ${level.label} (${level.minPercent}%-${level.maxPercent}%)`,
-      content: `[CRITICAL RELATIONSHIP STATE: ${level.emoji} ${level.label}]\n${level.prompt || ''}\n\n[REMINDER: This relationship behavior is ABSOLUTE and OVERRIDES any conflicting character traits. Apply consistently in EVERY response.]`,
-      constant: false,
+      comment: `❤️ Love Status — ${level.emoji} ${level.label} (${level.minPercent}-${level.maxPercent}%)`,
+      content: `[RELATIONSHIP STATUS: ${level.emoji} ${level.label}]
+${level.prompt || ''}
+
+This is the character's CURRENT relationship state with {{user}}. Apply consistently in this response. Do not break character.`,
+      constant: false, // ← only active when key matches
       vectorized: false,
       selective: true,
-      selectiveLogic: 0,
+      selectiveLogic: 0, // AND logic
       addMemo: true,
-      order: 100,
-      position: 0, // Before main prompt
+      order: 999, // ← just below tag rule
+      position: 0, // ← TOP of prompt
       disable: false,
       excludeRecursion: false,
       preventRecursion: false,
@@ -1782,15 +1840,16 @@ function exportAsLorebook() {
       groupWeight: 100,
       scanDepth: null,
       caseSensitive: null,
-      matchWholeWords: null,
+      matchWholeWords: false,
       useGroupScoring: null,
       automationId: '',
-      role: 0,
+      role: 0, // ← system role
       sticky: 0,
       cooldown: 0,
       delay: 0,
-      displayIndex: index,
+      displayIndex: uidCounter,
     };
+    uidCounter++;
   });
 
   const lorebook = {
@@ -1807,14 +1866,18 @@ function exportAsLorebook() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
+  const msg = `สร้าง Lorebook สำเร็จ — ${levels.length + 1} entries
+
+📋 ขั้นตอนการใช้งาน:
+1. นำเข้าไฟล์นี้ใน World Info > Import
+2. ผูก lorebook กับตัวละคร (Character > Advanced > Use lorebook)
+3. Extension จะอัพเดต variable {{love_level}} ตามคะแนนอัตโนมัติ
+4. Entry ที่ตรงกับ level ปัจจุบันจะ active ที่ top position`;
+
   if (typeof toastr !== 'undefined') {
-    toastr.success(
-      `สร้าง Lorebook สำเร็จ — ${levels.length} entries\nนำเข้าผ่าน World Info > Import`,
-      'Lorebook Export',
-      { timeOut: 6000 },
-    );
+    toastr.success(msg, 'Lorebook Export', { timeOut: 10000 });
   } else {
-    alert(`ส่งออก Lorebook สำเร็จ! (${levels.length} entries)\nนำเข้าผ่าน World Info > Import`);
+    alert(msg);
   }
 }
 
@@ -2144,7 +2207,7 @@ function openRewardEditor(packId, rewardIndex) {
                     <div class="love-editor-field" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
                         <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
                             <input type="checkbox" id="love-editor-progressive" ${reward.progressiveReveal ? 'checked' : ''} />
-                            <span style="font-size:0.85em;">🌫️ Progressive Reveal</span>
+                            <span style="font-size:0.85em;">เผยรูปทีละน้อย</span>
                         </label>
                         <div style="flex:1;min-width:140px;">
                             <label style="font-size:0.8em;opacity:0.7;">⏰ หมดอายุ (ไม่บังคับ)</label>
@@ -2401,6 +2464,17 @@ function onPromptReady() {
 
       // Short reminder right before AI response — last thing AI sees
       reminderPrompt = `[Active Relationship Status: ${level.emoji} ${level.label} → ${level.prompt}]`;
+
+      // Set chat variable for Lorebook keyword matching ({{getvar::love_level}} in lorebook entries)
+      try {
+        if (context.variables && typeof context.variables.local === 'object') {
+          context.variables.local.set('love_level', level.label);
+        } else if (typeof context.executeSlashCommandsWithOptions === 'function') {
+          context.executeSlashCommandsWithOptions(`/setvar key=love_level ${level.label}`);
+        }
+      } catch (e) {
+        // Variable system not available, lorebook fallback won't work but injection still does
+      }
     }
 
     // Daily mood (subtle, only in system prompt)
