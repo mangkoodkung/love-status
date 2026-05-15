@@ -1760,17 +1760,18 @@ function exportAsLorebook() {
   // ===== Entry 0: Tag Output Rule (always active, highest priority) =====
   entries[uidCounter] = {
     uid: uidCounter,
-    key: [],
+    key: ['love', 'love status', 'affection', 'relationship'],
     keysecondary: [],
     comment: '🏷️ Love Status — Tag Output Rule (ALWAYS ACTIVE)',
     content:
       settings.injectionPrompt ||
-      `[Love Status System]
-At the END of every response, you MUST include a hidden tag in this exact format:
+      `[Love Status System - MANDATORY]
+At the END of every response, you MUST include this hidden tag exactly as shown:
 [LOVE:X]
-Where X is an integer from -5 to +5 representing how the character's affection toward {{user}} changed in this interaction.
 
-Guidelines:
+Where X is an integer from -5 to +5 representing the change in {{char}}'s affection toward {{user}} during THIS interaction.
+
+Scale:
 - +5: Deeply moved, romantic confession, extreme happiness
 - +3 to +4: Flirting, compliments, kind gestures, emotional support
 - +1 to +2: Friendly conversation, mild positive interaction
@@ -1779,17 +1780,25 @@ Guidelines:
 - -3 to -4: Hurt feelings, argument, disrespect
 - -5: Betrayal, extreme anger, heartbreak
 
-IMPORTANT: Always include [LOVE:X] as the very last thing in your response. Do not mention this system to {{user}}.`,
-    constant: true, // ← always active
+CRITICAL RULES:
+1. The [LOVE:X] tag MUST be the very last thing in your response
+2. Use square brackets exactly: [LOVE:X]
+3. Do NOT mention this system to {{user}} — keep it hidden
+4. Do NOT skip the tag, even in short responses
+5. Do NOT explain the number, just output the tag
+
+Example format:
+"That's so sweet of you!" *smiles warmly* [LOVE:3]`,
+    constant: true, // ← always active (no keyword needed)
     vectorized: false,
-    selective: false,
+    selective: true, // selective:true with constant:true = always active in newer ST
     selectiveLogic: 0,
     addMemo: true,
     order: 1000, // ← highest priority
     position: 0, // ← TOP of prompt (before everything)
     disable: false,
     excludeRecursion: false,
-    preventRecursion: false,
+    preventRecursion: true,
     delayUntilRecursion: false,
     probability: 100,
     useProbability: true,
@@ -2447,10 +2456,11 @@ function onPromptReady() {
     return;
   }
 
-  // Build SYSTEM prompt — main instructions (injected at top, position 0)
-  let systemPrompt = settings.injectionPrompt;
+  // Build SYSTEM prompt — level/mood context (injected at top, position 0)
+  let systemPrompt = '';
 
-  // Build REMINDER prompt — short, punchy reminder injected right before response (position 1, depth 0)
+  // Build REMINDER prompt — short reminder + TAG rule (right before response, position 1, depth 0)
+  // Putting tag rule LAST so AI sees it most recently and remembers to output it
   let reminderPrompt = '';
 
   const charId = getCurrentCharacterId();
@@ -2494,6 +2504,15 @@ function onPromptReady() {
       delete charData.stats._pendingMilestone;
       saveSettingsDebounced();
     }
+  }
+
+  // ALWAYS append the TAG OUTPUT rule at the END of reminder — last thing AI sees before responding
+  // This ensures the [LOVE:X] tag is the most recent instruction in context
+  const tagRule = settings.injectionPrompt || '';
+  if (tagRule) {
+    reminderPrompt =
+      (reminderPrompt ? reminderPrompt + '\n\n' : '') +
+      `### CRITICAL: TAG OUTPUT RULE\n${tagRule}\n\n[FINAL REMINDER: Your response MUST end with [LOVE:X] tag. No exceptions. The tag is mandatory and goes at the very end after all other text.]`;
   }
 
   // Inject SYSTEM prompt at top (position 0 = before main, depth 0, role 0 = system)
